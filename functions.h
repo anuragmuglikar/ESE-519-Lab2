@@ -27,4 +27,17 @@ void letsBuzz(){
 	}
 }
 
-void 
+void init_interrupts(){
+		
+	TCCR1B |= 0b00000001; //setting the prescaler to 1.
+	TCCR1B |= 0b00000000; //Enabling ICES1 (7) to detect a falling edge
+	TIMSK1 = 0b00100000; //Enable ICEI pin
+	sei();				// Enable global interrupt
+	
+
+}
+
+ISR(TIMER1_CAPT_vect){
+	PORTB ^= 1 << 5;
+	TCCR1B ^= 1 << 6;	//setting ICES Pin to detect a rising edge so that the same pin can be toggle back when button is released.
+}
