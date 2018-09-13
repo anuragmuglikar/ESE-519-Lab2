@@ -19,7 +19,7 @@ void timer0_init()
 	TCNT0 = 0;		// start counter
 }
 
-void letsBuzz(){
+void playMusic(){
 	if (TCNT0 >= 250)
 	{
 		PORTD ^= (1 << 6);

@@ -19,8 +19,8 @@ int main(void)
 	init();
 	while (1)
 	{
-		pollButton();
-		letsBuzz();
+		pollButton();		//method for polling input pin without interrupts
+		playMusic();			//method for buzzing the buzzer.
 		
 	}
 }
