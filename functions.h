@@ -48,8 +48,29 @@ void init_interrupts(){
 
 }
 
+void generateTriggerPulse(){
+	TCCR1B = 0b00000001; //setting the prescaler to 1.
+	TCCR1A = 0b01000010; //CTC Mode
+	TCCR1B |= 0b01000000;
+	PORTB |= 0b00000010; 
+	TCNT1 = 0;
+	sei();
+	OCR1A = TCNT1 + 40;
+	TIMSK1 = 0b000000010; //Enable ICEI pin interrupt.
+	
+}
+
+void findRange(){
+	
+}
+
+
+
+
+
+
 ISR(TIMER1_CAPT_vect){
-	PORTB ^= 1 << 5;
+	
 	TCCR1B ^= 1 << 6;	//setting ICES Pin to detect a rising edge so that the same pin can be toggle back when button is released.
 }
 
