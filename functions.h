@@ -30,16 +30,21 @@ void init_interrupts(){
 		
 	TCCR1B |= 0b00000001; //setting the prescaler to 1.
 	TCCR1B |= 0b10000000; //Enabling ICES1 (7) to detect a falling edge
-	TIMSK1 = 0b000000010; //Enable ICEI pin.
+	TIMSK1 = 0b000000010; //Enable ICEI pin interrupt.
 	
-	
-	TCCR0A |= 0b01000000;	//compare mode
+	// This section for wave generation using timers
+	/*TCCR0A |= 0b01000000;	//compare mode
 	TCCR0B |= 0b00000100;	//prescale 256
 	TIMSK0 |= 0b00000010; //Enable ICEI pin.
+	OCR0A = TCNT0 + ticks; */
 	
+	//Wave generation with CTC Mode
+	TCCR0A = 0b01000010; //CTC Mode
+	TCCR0B = 0b10000100;
+	TIMSK0 = 0x00; //No Interrupts
 	TCNT0 = 0;
 	OCR0A = TCNT0 + ticks;
-	sei();				// Enable global interrupt
+	//sei();				// Enable global interrupt
 
 }
 
