@@ -13,13 +13,6 @@ void pollButton(){
 		}
 }
 
-void timer0_init()
-{
-	//TCCR0B |= (1 << CS01);	// timer with no pre-scaling
-	//TCNT0 = 0;		// start counter
-	//TIMSK0 = 0b00000001; //Enable overflow interrupt.
-}
-
 void playMusic(){
 		PORTD ^= (1 << 6);
 		//TCNT0 = 0;            // reset counter
@@ -27,10 +20,6 @@ void playMusic(){
 }
 
 void init_interrupts(){
-		
-	TCCR1B |= 0b00000001; //setting the prescaler to 1.
-	TCCR1B |= 0b10000000; //Enabling ICES1 (7) to detect a falling edge
-	TIMSK1 = 0b000000010; //Enable ICEI pin interrupt.
 	
 	// This section for wave generation using timers
 	/*TCCR0A |= 0b01000000;	//compare mode
@@ -39,54 +28,89 @@ void init_interrupts(){
 	OCR0A = TCNT0 + ticks; */
 	
 	//Wave generation with CTC Mode
+	/*
 	TCCR0A = 0b01000010; //CTC Mode
 	TCCR0B = 0b10000100;
-	TIMSK0 = 0x00; //No Interrupts
+	TIMSK0 = 0b00000011; 
 	TCNT0 = 0;
 	OCR0A = TCNT0 + ticks;
-	//sei();				// Enable global interrupt
-
+	sei();				// Enable global interrupt
+*/
 }
 
 void generateTriggerPulse(){
-	TCCR1B = 0b00000001; //setting the prescaler to 1.
-	TCCR1A = 0b01000010; //CTC Mode
-	TCCR1B |= 0b01000000;
-	PORTB |= 0b00000010; 
+	//TCCR1B = 0b00000010; //setting the prescaler to 1.
+	cli();
+	TCCR1A = 0b01000000; //CTC Mode
+	TCCR1B = 0b00001010;
+	PORTB = 0b00000010; 
+	overflow = 0;
 	TCNT1 = 0;
-	sei();
-	OCR1A = TCNT1 + 40;
+	OCR1A = 10;
 	TIMSK1 = 0b000000010; //Enable ICEI pin interrupt.
-	
+	sei();
 }
 
 void findRange(){
 	
 }
 
+//unused func
+void enablePulseCapture(){
+	TCCR1A = 0b00000000; 
+	TCCR1B = 0b01000001;
+	TCNT1 = 0;
+	rising = 1;
+	TIMSK1 |= 0b001000000; //Enable ICEI pin interrupt.
+	
+}
 
-
-
-
+void getFreq(){
+timePeriod = timeStop - timeStart;
+if(timeStop < timeStart){
+	overflow--;
+	timePeriod = (overflow * 0.0327675) + (timeStart- timeStop)*0.0000005;
+	}else{
+	timePeriod = (overflow * 0.0327675) + timePeriod;
+}
+printf("\n Period ==> %d", timePeriod);
+}
 
 ISR(TIMER1_CAPT_vect){
+	if(rising){
+		PORTB |= (1 << 5);
+		timeStart =	(TCNT1H << 8) | (TCNT1L & 0xff);
+		rising = 0;
+		TCCR1B ^= 1 << 6;	//setting ICES Pin to detect a falling edge so that the same pin can be toggle back when button is released.
+	}else{
+		TIMSK1 = 0x00;
+		rising = 1;
+		TCCR1B = 0x00;
+		PORTB &= (0 << 5);
+		timeStart =	(TCNT1H << 8) | (TCNT1L & 0xff);
+		generateTriggerPulse();
+	}
 	
-	TCCR1B ^= 1 << 6;	//setting ICES Pin to detect a rising edge so that the same pin can be toggle back when button is released.
+	
+}
+
+ISR(TIMER1_COMPA_vect){
+	//PORTB |= (1 << 5);
+	//printf("G T P INT \n");
+	TCNT1 = 0;
+	OCR1A = 10;
+	cli();
+	TCCR1B = 0b01000010;
+	rising = 1;
+	TIMSK1 = 0b00100000; //Enable ICEI pin interrupt.
+	sei();
+}
+
+
+ISR(TIMER1_OVF_vect){
+	overflow++;
 }
 
 ISR(TIMER0_COMPA_vect){
-	OCR0A += ticks;
 	PORTD ^= 1 << 6;
-	PORTB ^= 1 << 5;
-	//TCCR0A ^= 1 << 6;	//setting ICES Pin to detect a rising edge so that the same pin can be toggle back when button is released.
 }
-
-/*ISR(TIMER0_OVF_vect){
-	buzzAtCount ++;
-	if(buzzAtCount == 80){
-		buzzAtCount = 0;
-		playMusic();			//method for buzzing the buzzer.
-	}
-	//TIFR0 = 1 << 0;
-	TCNT0 = 0;
-}*/
