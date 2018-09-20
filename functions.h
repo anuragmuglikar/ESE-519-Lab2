@@ -41,13 +41,14 @@ void init_interrupts(){
 void generateTriggerPulse(){
 	//TCCR1B = 0b00000010; //setting the prescaler to 1.
 	cli();
-	TCCR1A = 0b01000000; //CTC Mode
-	TCCR1B = 0b00001010;
-	PORTB = 0b00000010; 
+	TCCR1A = 0b00000000; //CTC Mode
+	TCCR1B = 0b00000010; //prescale 8
+	
 	overflow = 0;
 	TCNT1 = 0;
 	OCR1A = 10;
 	TIMSK1 = 0b000000010; //Enable ICEI pin interrupt.
+	PORTB = 0b00000010; 
 	sei();
 }
 
@@ -100,10 +101,13 @@ ISR(TIMER1_COMPA_vect){
 	TCNT1 = 0;
 	OCR1A = 10;
 	cli();
+	PORTB = 0b00000000; 
 	TCCR1B = 0b01000010;
 	rising = 1;
+	
 	TIMSK1 = 0b00100000; //Enable ICEI pin interrupt.
 	sei();
+	
 }
 
 
