@@ -8,6 +8,7 @@
 void pollButton(){
 	if(!(PINB & 0x01)){			//true if input PB0 goes low.
 			PORTB |= 0x20;			//0b00100000; sets high output
+			//freqSelect++;
 			}else{
 			PORTB &= 0b11011111;	// sets output low. preserving other pins.
 		}
@@ -67,20 +68,26 @@ void enablePulseCapture(){
 }
 
 void getFreq(){
-timePeriod = timeStop - timeStart;
-if(timeStop < timeStart){
-	overflow--;
-	timePeriod = (overflow * 0.0327675) + (timeStart- timeStop)*0.0000005;
-	}else{
-	timePeriod = (overflow * 0.0327675) + timePeriod;
-}
-printf("\n Period ==> %d", timePeriod);
+	int period;
+	// 118 => 1146
+	// 105 => 1174
+	// 94 => 1318
+	// 88 => 1397
+	// 79 => 1568
+	// 70 => 1760
+	// 62 => 1976
+	// 59 => 2093
+	if(timeStop > timeStart)
+	period = timeStop - timeStart;
+	else
+	period = timeStart - timeStop;
+	
 }
 
 ISR(TIMER1_CAPT_vect){
 	if(rising){
 		PORTB |= (1 << 5);
-		timeStart =	(TCNT1H << 8) | (TCNT1L & 0xff);
+		timeStart =	ICR1;
 		rising = 0;
 		TCCR1B ^= 1 << 6;	//setting ICES Pin to detect a falling edge so that the same pin can be toggle back when button is released.
 	}else{
@@ -88,7 +95,7 @@ ISR(TIMER1_CAPT_vect){
 		rising = 1;
 		TCCR1B = 0x00;
 		PORTB &= (0 << 5);
-		timeStart =	(TCNT1H << 8) | (TCNT1L & 0xff);
+		timeStart =	ICR1;
 		generateTriggerPulse();
 	}
 	
@@ -117,4 +124,16 @@ ISR(TIMER1_OVF_vect){
 
 ISR(TIMER0_COMPA_vect){
 	PORTD ^= 1 << 6;
+}
+
+generateTones(int freq){
+		//Wave generation with CTC Mode
+	
+	TCCR0A = 0b01000010; 
+	TCCR0B = 0b10000100;
+	TIMSK0 = 0b00000011; 
+	TCNT0 = 0;
+	OCR0A = TCNT0 + ticks;
+	sei();				
+
 }
